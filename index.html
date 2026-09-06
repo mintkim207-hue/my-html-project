@@ -714,7 +714,6 @@ button{font-family:inherit; cursor:pointer;}
 </div>
 
 <!-- 설정 버튼 & 패널 -->
-<button id="settingsToggle" title="설정">⚙</button>
 <button id="musicToggle" title="배경음악" style="display:none;">♪</button>
 <audio id="bgAudio" loop="" preload="auto"></audio>
 <div id="settingsPanel">
@@ -2248,6 +2247,7 @@ function freezeSplashOpen(){
 function runSplashSequence(){
   const splash = document.getElementById('splashScreen');
   clearTimeout(splashHideTimer1); clearTimeout(splashHideTimer2);
+  splash.classList.remove('splash-in','splash-out','splash-hidden');
   if(!CONFIG.splash.enabled){ splash.classList.add('splash-hidden'); revealHero(); return; }
   requestAnimationFrame(()=> splash.classList.add('splash-in'));
   splashHideTimer1 = setTimeout(()=>{ splash.classList.remove('splash-in'); splash.classList.add('splash-out'); revealHero(); }, CONFIG.splash.durationMs);
@@ -2281,7 +2281,7 @@ document.querySelectorAll('.reveal').forEach(el => io2.observe(el));
 const settingsToggle = document.getElementById('settingsToggle');
 const settingsPanel = document.getElementById('settingsPanel');
 document.getElementById('settingsClose').addEventListener('click', (e)=>{ e.stopPropagation(); settingsPanel.classList.remove('open'); document.body.classList.remove('settings-open'); });
-settingsToggle.addEventListener('click', ()=> { settingsPanel.classList.add('open'); document.body.classList.add('settings-open'); document.getElementById('settingsDrawer').classList.remove('drawer-min'); populateForm(); });
+if(settingsToggle) settingsToggle.addEventListener('click', ()=> { settingsPanel.classList.add('open'); document.body.classList.add('settings-open'); document.getElementById('settingsDrawer').classList.remove('drawer-min'); populateForm(); });
 settingsPanel.addEventListener('click', (e)=>{ if(e.target === settingsPanel){ settingsPanel.classList.remove('open'); document.body.classList.remove('settings-open'); } });
 function toggleDrawerMin(){ document.getElementById('settingsDrawer').classList.toggle('drawer-min'); }
 document.getElementById('setDragHandle').addEventListener('click', toggleDrawerMin);
