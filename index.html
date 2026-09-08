@@ -2241,18 +2241,8 @@ updateSectionVisibility();
 
 
 function syncHeroPhotoWidth(){
-  const namesEl = document.getElementById('heroNames');
-  const frame = document.getElementById('heroPhotoFrame');
-  if(!namesEl || !frame) return;
-  const w = Math.ceil(namesEl.getBoundingClientRect().width);
-  if(w > 0){
-    frame.style.width = w + 'px';
-    frame.style.marginLeft = 'auto';
-    frame.style.marginRight = 'auto';
-  }
+  // 여백을 "맨 밑에 추가 사진"과 동일한 28px로 맞추는 방식과 충돌하여 비활성화했습니다.
 }
-window.addEventListener('resize', syncHeroPhotoWidth);
-if(document.fonts && document.fonts.ready){ document.fonts.ready.then(syncHeroPhotoWidth); }
 
 function revealHero(){
   document.getElementById('heroPhotoFrame').classList.add('is-visible');
