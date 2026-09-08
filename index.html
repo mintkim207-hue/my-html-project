@@ -220,6 +220,18 @@ button{font-family:inherit; cursor:pointer;}
   font-family: var(--splash-headline-font); font-weight: var(--splash-headline-weight); font-size: var(--splash-headline-size);
   line-height:1.05; color: var(--splash-headline-color); text-align:center; word-break: keep-all; pointer-events:none;
 }
+.splash-headline .hw-char{
+  display:inline-block;
+  opacity:0;
+  transform: translateY(10px) rotate(-3deg);
+  filter: blur(2px);
+  animation: hwCharIn 0.5s ease forwards;
+}
+.splash-headline .hw-space{ width:0.28em; }
+@keyframes hwCharIn{
+  0%{ opacity:0; transform: translateY(10px) rotate(-3deg); filter: blur(2px); }
+  100%{ opacity:1; transform: translateY(0) rotate(0deg); filter: blur(0); }
+}
 .splash-foot{ text-align:center; padding: 26px 24px 40px; transform: translate(var(--splash-foot-offset-x), var(--splash-foot-offset-y)); }
 .splash-date{ font-family: var(--splash-date-font); font-size: var(--splash-date-size); font-weight:700; }
 .splash-venue{ margin-top: var(--splash-date-gap); font-family: var(--splash-venue-font); font-size: var(--splash-venue-size); letter-spacing:.12em; color: var(--ink-soft); }
@@ -1936,6 +1948,7 @@ function renderAll(){
   setImg('monoPhoto', CONFIG.photos.mono || CONFIG.photos.hero, 'monoPhotoPlaceholder', true);
 
   document.getElementById('heroNames').innerHTML = `${CONFIG.couple.groomEn}<span class="amp">&amp;</span>${CONFIG.couple.brideEn}`;
+  syncHeroPhotoWidth();
   document.getElementById('heroQuoteText').textContent = CONFIG.heroQuote.text;
   document.getElementById('heroQuoteSource').textContent = CONFIG.heroQuote.source;
   document.getElementById('heroDate').textContent = CONFIG.weddingDateDisplay;
@@ -2097,11 +2110,29 @@ function setupAudio(){
   updateIcon();
 }
 
+const HW_CHAR_DELAY = 45;
+const HW_CHAR_DURATION = 500;
+function renderHandwriteHeadline(){
+  const el = document.getElementById('splashHeadline');
+  const text = CONFIG.splash.headline || '';
+  el.innerHTML = '';
+  [...text].forEach((ch, i) => {
+    const span = document.createElement('span');
+    span.className = 'hw-char' + (ch === ' ' ? ' hw-space' : '');
+    span.textContent = ch === ' ' ? '\u00A0' : ch;
+    span.style.animationDelay = (i * HW_CHAR_DELAY) + 'ms';
+    el.appendChild(span);
+  });
+}
+function getHandwriteTotalMs(){
+  const len = [...(CONFIG.splash.headline || '')].length;
+  return len > 0 ? (len - 1) * HW_CHAR_DELAY + HW_CHAR_DURATION : 0;
+}
 function renderSplash(){
   setImg('splashPhoto', CONFIG.photos.splash || CONFIG.photos.hero, 'splashPhotoPlaceholder', '--splash-photo-ratio');
   document.getElementById('splashGroomEn').textContent = CONFIG.couple.groomEn;
   document.getElementById('splashBrideEn').textContent = CONFIG.couple.brideEn;
-  document.getElementById('splashHeadline').textContent = CONFIG.splash.headline;
+  renderHandwriteHeadline();
   document.getElementById('splashDate').textContent = CONFIG.splash.dateText;
   document.getElementById('splashVenue').textContent = CONFIG.splash.venueText;
 }
@@ -2209,6 +2240,20 @@ updateSectionVisibility();
 
 
 
+function syncHeroPhotoWidth(){
+  const namesEl = document.getElementById('heroNames');
+  const frame = document.getElementById('heroPhotoFrame');
+  if(!namesEl || !frame) return;
+  const w = Math.ceil(namesEl.getBoundingClientRect().width);
+  if(w > 0){
+    frame.style.width = w + 'px';
+    frame.style.marginLeft = 'auto';
+    frame.style.marginRight = 'auto';
+  }
+}
+window.addEventListener('resize', syncHeroPhotoWidth);
+if(document.fonts && document.fonts.ready){ document.fonts.ready.then(syncHeroPhotoWidth); }
+
 function revealHero(){
   document.getElementById('heroPhotoFrame').classList.add('is-visible');
   ['heroNames','heroQuoteText','heroDate','heroVenue'].forEach(id=>document.getElementById(id).classList.add('is-visible'));
@@ -2226,8 +2271,9 @@ function runSplashSequence(){
   splash.classList.remove('splash-out','splash-hidden');
   if(!CONFIG.splash.enabled){ splash.classList.remove('splash-in'); splash.classList.add('splash-hidden'); revealHero(); return; }
   requestAnimationFrame(()=> splash.classList.add('splash-in'));
-  splashHideTimer1 = setTimeout(()=>{ splash.classList.remove('splash-in'); splash.classList.add('splash-out'); revealHero(); }, CONFIG.splash.durationMs);
-  splashHideTimer2 = setTimeout(()=>{ splash.classList.add('splash-hidden'); }, CONFIG.splash.durationMs + 950);
+  const effectiveDuration = getHandwriteTotalMs() + 400;
+  splashHideTimer1 = setTimeout(()=>{ splash.classList.remove('splash-in'); splash.classList.add('splash-out'); revealHero(); }, effectiveDuration);
+  splashHideTimer2 = setTimeout(()=>{ splash.classList.add('splash-hidden'); }, effectiveDuration + 950);
 }
 let splashStarted = false;
 function startSplashOnce(){
@@ -2236,8 +2282,10 @@ function startSplashOnce(){
   runSplashSequence();
 }
 window.addEventListener('load', startSplashOnce);
+window.addEventListener('load', syncHeroPhotoWidth);
 // PC 등에서 폰트/영상 로딩이 느려 load 이벤트가 지연되는 경우를 대비한 안전장치
 setTimeout(startSplashOnce, 3000);
+startSplashOnce();
 // 스플래시 관련 항목(id에 'splash' 포함)을 편집하는 동안은 자동으로 사라지지 않고 계속 보이게 고정
 // 단, 편집을 멈추면 잠시 후 다시 정상적으로 재생 → 사라지도록 재예약합니다.
 let splashFreezeDebounce;
